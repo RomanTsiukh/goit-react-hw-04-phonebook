@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { useFormik, Formik, Form, Field, ErrorMessage } from 'formik';
 import { Box } from '../Box';
 import * as yup from 'yup';
 import { Error, ButtonAddContact } from './ContactForm.styled';
@@ -25,14 +25,15 @@ const schema = yup.object().shape({
     ),
 });
 
-const initialValue = {
-  name: '',
-  number: '',
-};
-
 const ContactForm = ({ onSubmit }) => {
+  const formik = useFormik({
+    initialValues: {
+      name: '',
+      number: '',
+    },
+  });
   return (
-    <Formik initialValues={initialValue} validationSchema={schema}>
+    <Formik initialValues={formik.initialValues} validationSchema={schema}>
       <Form onSubmit={onSubmit}>
         <Box
           display="flex"
