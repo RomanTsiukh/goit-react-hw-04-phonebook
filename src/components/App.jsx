@@ -6,8 +6,8 @@ import { Box } from './Box';
 import { Section } from 'components/Section/Section';
 import ContactForm from './ContactForm/ContactForm';
 import ContactList from 'components/ContactList/ContactList';
-
 import Filter from 'components/Filter/Filter';
+import { useState, useEffect } from 'react';
 
 const Title = styled.h1`
   text-align: center;
@@ -17,101 +17,77 @@ const Title = styled.h1`
   margin-bottom: ${p => p.theme.space[0]}px;
 `;
 
-class App extends React.Component {
-  state = {
-    contacts: [
+export default function App() {
+  const [contacts, setContacts] = useState(
+    JSON.parse(localStorage.getItem('contacts')) ?? [
       { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
       { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
       { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
       { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
-    ],
-    filter: '',
-  };
+    ]
+  );
+  const [filter, setFilter] = useState('');
 
-  handleSubmit = e => {
-    e.preventDefault();
-    const name = e.target.name.value;
-    const number = e.target.number.value;
-    const addedContact = { id: nanoid(), name, number };
-
-    const auditContact = this.state.contacts.some(
-      contact => contact.name.toLowerCase() === name.toLowerCase()
-    );
-
-    auditContact
-      ? alert(`Sorry, ${name} is already in your contacts`)
-      : this.setState(prevState => ({
-          contacts: [addedContact, ...prevState.contacts],
-        }));
-
-    e.target.reset();
-  };
-
-  changeFilter = e => {
-    this.setState({ filter: e.currentTarget.value });
-  };
-
-  getVisibleContacts = () => {
-    const { filter, contacts } = this.state;
+  const getVisibleContacts = () => {
     const normalizeFilter = filter.toLowerCase();
     return contacts.filter(contact =>
       contact.name.toLowerCase().includes(normalizeFilter)
     );
   };
 
-  deleteContact = contactId => {
-    this.setState(prevState => ({
-      contacts: prevState.contacts.filter(contact => contact.id !== contactId),
-    }));
+  const deleteContact = contactId =>
+    setContacts(contacts.filter(contact => contact.id !== contactId));
+
+  const handleSubmit = e => {
+    e.preventDefault();
+    const name = e.target.name.value;
+    const number = e.target.number.value;
+    const addedContact = { id: nanoid(), name, number };
+
+    const auditContact = contacts.some(
+      contact => contact.name.toLowerCase() === name.toLowerCase()
+    );
+
+    auditContact
+      ? alert(`Sorry, ${name} is already in your contacts`)
+      : setContacts(() => [addedContact, ...contacts]);
+
+    e.target.reset();
   };
 
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
-    console.log(parsedContacts);
+  const changeFilter = e => {
+    setFilter(e.currentTarget.value);
+  };
 
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
-    }
-  }
+  useEffect(() => {
+    window.localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.contacts !== prevState.contacts)
-      console.log('Обновиось поле contacts');
-    // console.log(prevState);
-    // console.log(this.state);
-    localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-  }
+  return (
+    <Box
+      bg="firstBgColor"
+      color="mainTextColor"
+      p={4}
+      pl={5}
+      pr={5}
+      width="360px"
+      fontFamily="Ubuntu"
+      fontSize={16}
+      border="2px solid"
+      borderRadius={16}
+    >
+      <Title>Phonebook</Title>
+      <Section>
+        <ContactForm onSubmit={handleSubmit} />
+      </Section>
 
-  render() {
-    return (
-      <Box
-        bg="firstBgColor"
-        color="mainTextColor"
-        p={4}
-        pl={5}
-        pr={5}
-        width="360px"
-        fontFamily="Ubuntu"
-        fontSize={16}
-        border="2px solid"
-        borderRadius={16}
-      >
-        <Title>Phonebook</Title>
-        <Section>
-          <ContactForm onSubmit={this.handleSubmit} />
-        </Section>
-
-        <Section title="Contacts">
-          <Filter value={this.state.filter} onChange={this.changeFilter} />
-          <ContactList
-            contacts={this.getVisibleContacts()}
-            onDeletContact={this.deleteContact}
-          />
-        </Section>
-      </Box>
-    );
-  }
+      <Section title="Contacts">
+        <Filter value={filter} onChange={changeFilter} />
+        <ContactList
+          contacts={getVisibleContacts()}
+          onDeletContact={deleteContact}
+        />
+      </Section>
+    </Box>
+  );
 }
-
-export default App;
